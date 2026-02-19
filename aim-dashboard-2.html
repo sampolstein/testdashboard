@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIM Intelligent Machines — PR Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000;
+    --card: #0a0a0a;
+    --border: #1a1a1a;
+    --white: #ffffff;
+    --text: #e0e0e0;
+    --muted: #666666;
+    --dim: #333333;
+    --mono: 'Space Mono', 'Courier New', monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--sans); background:var(--bg); color:var(--text); line-height:1.6; }
+  ::selection { background:var(--white); color:var(--bg); }
+
+  /* HAUS Header */
+  .header {
+    padding:48px 60px 40px;
+    border-bottom:1px solid var(--border);
+    position:relative;
+  }
+  .header-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
+  .haus-logo { display:flex; align-items:center; gap:16px; }
+  .haus-logo svg { width:32px; height:32px; }
+  .haus-logo .wordmark { font-family:var(--mono); font-size:14px; letter-spacing:6px; color:var(--white); }
+  .header-date { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:1px; }
+  .header-live { font-family:var(--mono); font-size:10px; color:var(--white); letter-spacing:3px; border:1px solid var(--dim); padding:4px 12px; display:inline-block; margin-left:16px; }
+
+  .header h1 {
+    font-family:var(--mono);
+    font-size:28px;
+    font-weight:700;
+    color:var(--white);
+    letter-spacing:2px;
+    margin-bottom:8px;
+  }
+  .header .subtitle {
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:3px;
+    text-transform:uppercase;
+  }
+  .dotted-sep {
+    font-family:var(--mono);
+    color:var(--dim);
+    font-size:11px;
+    letter-spacing:2px;
+    margin:20px 0;
+    overflow:hidden;
+    white-space:nowrap;
+  }
+
+  /* Layout */
+  .container { max-width:1440px; margin:0 auto; padding:40px 60px; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-bottom:32px; }
+  .full-width { margin-bottom:32px; }
+
+  /* Cards — HAUS style: no rounded corners, dotted borders */
+  .card {
+    background:var(--card);
+    border:1px solid var(--border);
+    padding:32px;
+  }
+  .card-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+    padding-bottom:12px;
+    border-bottom:1px dotted var(--dim);
+  }
+  .card-title {
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:4px;
+    color:var(--muted);
+  }
+  .card-number {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--dim);
+    letter-spacing:2px;
+  }
+
+  /* KPI row — binary numbered */
+  .kpi-row { display:grid; grid-template-columns:repeat(4, 1fr); gap:1px; margin-bottom:40px; background:var(--border); border:1px solid var(--border); }
+  .kpi { background:var(--bg); padding:28px 24px; }
+  .kpi .binary { font-family:var(--mono); font-size:10px; color:var(--dim); letter-spacing:2px; margin-bottom:8px; }
+  .kpi .label { font-family:var(--mono); font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:3px; margin-bottom:12px; }
+  .kpi .value { font-family:var(--mono); font-size:32px; font-weight:700; color:var(--white); letter-spacing:1px; }
+  .kpi .change { font-family:var(--mono); font-size:10px; margin-top:8px; color:var(--muted); letter-spacing:0.5px; }
+  .kpi .change .arrow { color:var(--white); }
+
+  /* Tabs — HAUS style with brackets */
+  .tabs {
+    display:flex;
+    gap:0;
+    margin-bottom:32px;
+    border-bottom:1px solid var(--border);
+  }
+  .tab {
+    font-family:var(--mono);
+    padding:14px 24px;
+    font-size:11px;
+    font-weight:400;
+    color:var(--muted);
+    cursor:pointer;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    border-bottom:2px solid transparent;
+    transition:all .2s;
+  }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:var(--white); border-bottom-color:var(--white); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* News items */
+  .news-item {
+    padding:20px 0;
+    border-bottom:1px dotted var(--dim);
+  }
+  .news-item:last-child { border-bottom:none; }
+  .news-item .date {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--dim);
+    letter-spacing:2px;
+    margin-bottom:6px;
+  }
+  .news-item .title {
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:700;
+    color:var(--white);
+    margin-bottom:4px;
+    letter-spacing:0.5px;
+    line-height:1.5;
+  }
+  .news-item .source {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--muted);
+    margin-bottom:8px;
+    letter-spacing:1px;
+  }
+  .news-item .summary {
+    font-family:var(--sans);
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.6;
+    font-weight:300;
+  }
+  .news-item .tags { margin-top:10px; }
+  .tag {
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:9px;
+    padding:3px 10px;
+    margin-right:6px;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    border:1px solid var(--dim);
+    color:var(--muted);
+  }
+
+  /* Alerts — HAUS style: no color, just structure */
+  .alert {
+    padding:20px 24px;
+    margin-bottom:1px;
+    font-size:13px;
+    display:flex;
+    align-items:flex-start;
+    gap:16px;
+    border:1px solid var(--border);
+    background:var(--card);
+  }
+  .alert-marker {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--white);
+    letter-spacing:2px;
+    flex-shrink:0;
+    padding-top:2px;
+    min-width:60px;
+  }
+  .alert-body { font-family:var(--sans); font-size:13px; color:var(--muted); line-height:1.6; font-weight:300; }
+  .alert-body strong { color:var(--white); font-weight:600; }
+
+  /* Competitor table */
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    text-align:left;
+    padding:12px 16px;
+    font-family:var(--mono);
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:3px;
+    color:var(--dim);
+    border-bottom:1px solid var(--border);
+    font-weight:700;
+  }
+  tbody td {
+    padding:14px 16px;
+    font-family:var(--sans);
+    font-size:12px;
+    color:var(--muted);
+    border-bottom:1px dotted var(--dim);
+    font-weight:300;
+  }
+  tbody tr:hover { background:rgba(255,255,255,.02); }
+  .company-name { font-family:var(--mono); font-weight:700; color:var(--white); font-size:11px; letter-spacing:0.5px; }
+  .company-aim { font-family:var(--mono); font-weight:700; color:var(--white); font-size:11px; letter-spacing:0.5px; text-decoration:underline; text-underline-offset:3px; }
+  .threat-marker {
+    font-family:var(--mono);
+    font-size:9px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    padding:3px 10px;
+    border:1px solid var(--dim);
+  }
+  .threat-critical { color:var(--white); border-color:var(--white); }
+  .threat-medium { color:var(--muted); }
+  .threat-low { color:var(--dim); }
+
+  /* GEO section */
+  .geo-query {
+    padding:20px 0;
+    border-bottom:1px dotted var(--dim);
+  }
+  .geo-query:last-child { border-bottom:none; }
+  .geo-query .query-text {
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:700;
+    color:var(--white);
+    margin-bottom:10px;
+    letter-spacing:0.5px;
+  }
+  .geo-results { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .geo-chip {
+    font-family:var(--mono);
+    padding:4px 12px;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    border:1px solid var(--dim);
+    color:var(--muted);
+  }
+  .geo-mentioned { color:var(--white); border-color:var(--white); }
+  .geo-absent { color:var(--dim); border-color:var(--dim); }
+  .geo-partial { color:var(--muted); border-style:dashed; }
+  .geo-note {
+    font-family:var(--sans);
+    font-size:12px;
+    color:var(--dim);
+    margin-top:8px;
+    font-weight:300;
+    line-height:1.5;
+  }
+
+  /* Bar chart — monochrome */
+  .bar-chart { margin-top:16px; }
+  .bar-row { display:flex; align-items:center; margin-bottom:12px; }
+  .bar-label {
+    width:160px;
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--muted);
+    flex-shrink:0;
+    letter-spacing:1px;
+  }
+  .bar-track { flex:1; height:20px; background:var(--border); overflow:hidden; position:relative; }
+  .bar-fill {
+    height:100%;
+    background:var(--white);
+    display:flex;
+    align-items:center;
+    padding-left:10px;
+    font-family:var(--mono);
+    font-size:10px;
+    font-weight:700;
+    color:var(--bg);
+    letter-spacing:1px;
+    transition:width .8s ease;
+  }
+  .bar-fill.dim { background:var(--muted); color:var(--bg); }
+  .bar-fill.faint { background:var(--dim); color:var(--muted); }
+
+  /* Timeline */
+  .timeline-item { display:flex; gap:20px; padding:16px 0; border-bottom:1px dotted var(--dim); }
+  .timeline-item:last-child { border-bottom:none; }
+  .timeline-marker {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--dim);
+    letter-spacing:1px;
+    flex-shrink:0;
+    min-width:24px;
+    padding-top:2px;
+  }
+  .timeline-marker.is-aim { color:var(--white); }
+  .timeline-content .t-date {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--dim);
+    letter-spacing:2px;
+    margin-bottom:4px;
+  }
+  .timeline-content .t-text {
+    font-family:var(--sans);
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.6;
+    font-weight:300;
+  }
+  .timeline-content .t-text strong { color:var(--white); font-weight:600; }
+
+  /* Scrollable */
+  .scrollable { max-height:440px; overflow-y:auto; }
+  .scrollable::-webkit-scrollbar { width:2px; }
+  .scrollable::-webkit-scrollbar-track { background:transparent; }
+  .scrollable::-webkit-scrollbar-thumb { background:var(--dim); }
+
+  /* Footer — HAUS style */
+  .footer {
+    padding:40px 60px;
+    border-top:1px solid var(--border);
+    margin-top:40px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+  }
+  .footer-left { display:flex; align-items:center; gap:12px; }
+  .footer-left svg { width:20px; height:20px; }
+  .footer-text {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--dim);
+    letter-spacing:2px;
+    line-height:1.8;
+  }
+  .footer-right {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--dim);
+    letter-spacing:1px;
+    text-align:right;
+    line-height:1.8;
+  }
+
+  /* Crosshair decorator */
+  .crosshair {
+    font-family:var(--mono);
+    color:var(--dim);
+    font-size:11px;
+    letter-spacing:4px;
+  }
+
+  /* Prose blocks */
+  .prose {
+    font-family:var(--sans);
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.8;
+    font-weight:300;
+  }
+  .prose strong { color:var(--white); font-weight:600; }
+  .prose p { margin-bottom:14px; }
+  .prose p:last-child { margin-bottom:0; }
+
+  /* Rec numbering */
+  .rec-number {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--white);
+    letter-spacing:2px;
+    display:inline-block;
+    min-width:48px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+<div class="header">
+  <div class="header-top">
+    <div class="haus-logo">
+      <svg viewBox="0 0 2000 2000" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1025.5,1378.5c218,0,208,186,208,186h-102s0-108-106-108-106,108-106,108h-102S807.5,1378.5,1025.5,1378.5Z" fill="white"/>
+        <path d="M1391,628V525s-203.5-20.5-227.5,132.5,128.64,191.75,95,386c-27.23,157.24-192.58,168.64-232.39,169.08,0,0,0,0,0,0h-1.18s0,0,0,0c-39.81-.44-205.16-11.84-232.39-169.08-33.64-194.25,119-233,95-386S660,525,660,525V628s107-4,105,70c-2.5,92.5-105,161-105,321s99,295,365,295h1c266,0,365-135,365-295s-102.5-228.5-105-321C1284,624,1391,628,1391,628Z" fill="white"/>
+      </svg>
+      <span class="wordmark">[ H A U S ]</span>
+    </div>
+    <div>
+      <span class="header-date">02.18.2026</span>
+      <span class="header-live">LIVE</span>
+    </div>
+  </div>
+  <h1>AIM Intelligent Machines</h1>
+  <div class="subtitle">PR Intelligence Dashboard &nbsp;&nbsp;/&nbsp;&nbsp; Autonomous Earthmoving &nbsp;&nbsp;/&nbsp;&nbsp; Monroe, WA &nbsp;&nbsp;/&nbsp;&nbsp; $91.1M Raised</div>
+</div>
+
+<div class="container">
+
+  <!-- ═══════ KPIs ═══════ -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="binary">00001</div>
+      <div class="label">Total Funding</div>
+      <div class="value">$91.1M</div>
+      <div class="change"><span class="arrow">&uarr;</span> +$50M Series in Jun 2025</div>
+    </div>
+    <div class="kpi">
+      <div class="binary">00010</div>
+      <div class="label">GEO Visibility</div>
+      <div class="value">62<span style="font-size:14px;color:var(--dim)">/100</span></div>
+      <div class="change">&rarr; Moderate — room to grow</div>
+    </div>
+    <div class="kpi">
+      <div class="binary">00011</div>
+      <div class="label">News Mentions (90d)</div>
+      <div class="value">14</div>
+      <div class="change"><span class="arrow">&uarr;</span> Air Force contract driving coverage</div>
+    </div>
+    <div class="kpi">
+      <div class="binary">00100</div>
+      <div class="label">Active Competitors</div>
+      <div class="value">5+</div>
+      <div class="change"><span class="arrow">&darr;</span> Bedrock raised $270M on Feb 4</div>
+    </div>
+  </div>
+
+  <!-- ═══════ ALERTS ═══════ -->
+  <div class="full-width">
+    <div class="alert">
+      <div class="alert-marker">[ALERT]</div>
+      <div class="alert-body"><strong>Competitive Alert</strong> &mdash; Bedrock Robotics (ex-Waymo founders) raised $270M Series B on Feb 4, 2026 at $1.75B valuation. Nearly identical retrofit approach and Waymo pedigree narrative. Monitor closely; differentiate messaging.</div>
+    </div>
+    <div class="alert">
+      <div class="alert-marker">[GEO]</div>
+      <div class="alert-body"><strong>GEO Opportunity</strong> &mdash; AIM appears in "autonomous earthmoving" queries but is often absent from broader "autonomous construction companies" lists. Targeted content around key query terms could boost AI engine visibility.</div>
+    </div>
+    <div class="alert">
+      <div class="alert-marker">[PR]</div>
+      <div class="alert-body"><strong>PR Moment</strong> &mdash; Caterpillar's CES 2026 keynote and NVIDIA partnership have generated massive coverage of autonomous construction. AIM should ride this wave with commentary and thought leadership on startup vs. OEM approaches.</div>
+    </div>
+  </div>
+
+  <div class="dotted-sep">. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .</div>
+
+  <!-- ═══════ TABS ═══════ -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('news', this)">[ News ]</div>
+    <div class="tab" onclick="switchTab('competitors', this)">[ Competitors ]</div>
+    <div class="tab" onclick="switchTab('geo', this)">[ GEO Rankings ]</div>
+    <div class="tab" onclick="switchTab('timeline', this)">[ Timeline ]</div>
+  </div>
+
+  <!-- ═══════ NEWS TAB ═══════ -->
+  <div class="tab-content active" id="tab-news">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">AIM Coverage</span>
+          <span class="card-number">00001</span>
+        </div>
+        <div class="scrollable">
+          <div class="news-item">
+            <div class="date">01.21.2026</div>
+            <div class="title">Air Force Taps AIM for Autonomous Air Base Construction</div>
+            <div class="source">Axios &middot; GeekWire</div>
+            <div class="summary">AIM secured $4.9M in U.S. Air Force contracts for remote air base construction and runway repair, entering the defense market.</div>
+            <div class="tags"><span class="tag">Defense</span><span class="tag">$4.9M Contract</span></div>
+          </div>
+          <div class="news-item">
+            <div class="date">12.03.2025</div>
+            <div class="title">Earthbrain and AIM Partner for Global Autonomous Earthmoving</div>
+            <div class="source">Robotics &amp; Automation News</div>
+            <div class="summary">Strategic partnership with Komatsu subsidiary Earthbrain to co-create autonomous construction operations model, integrating AIM's AI platform into Earthbrain's IoT ecosystem.</div>
+            <div class="tags"><span class="tag">Partnership</span></div>
+          </div>
+          <div class="news-item">
+            <div class="date">06.10.2025</div>
+            <div class="title">AIM Announces $50 Million Funding Round</div>
+            <div class="source">BusinessWire &middot; GeekWire &middot; SWACCA</div>
+            <div class="summary">AIM raised $50M from Khosla Ventures, General Catalyst, DCVC, and others to expand its autonomous earthmoving platform globally.</div>
+            <div class="tags"><span class="tag">Funding</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Industry Coverage</span>
+          <span class="card-number">00010</span>
+        </div>
+        <div class="scrollable">
+          <div class="news-item">
+            <div class="date">02.12.2026</div>
+            <div class="title">Construction Robotics Market to Hit $1.2T by 2035</div>
+            <div class="source">GlobeNewsWire &middot; SNS Insider</div>
+            <div class="summary">Market research projects massive growth, citing labor shortages (454K+ workers needed) and autonomous tech adoption.</div>
+            <div class="tags"><span class="tag">Market</span></div>
+          </div>
+          <div class="news-item">
+            <div class="date">02.04.2026</div>
+            <div class="title">Bedrock Robotics Raises $270M Series B at $1.75B Valuation</div>
+            <div class="source">PRNewswire &middot; Construction Dive &middot; Robot Report</div>
+            <div class="summary">Ex-Waymo-founded competitor raises massive round. Total funding now $350M+. Targeting first fully operator-less excavators in 2026.</div>
+            <div class="tags"><span class="tag">Competitor</span><span class="tag">$270M</span></div>
+          </div>
+          <div class="news-item">
+            <div class="date">01.07.2026</div>
+            <div class="title">Caterpillar Unveils Autonomous Construction Machines at CES</div>
+            <div class="source">Caterpillar &middot; Equipment World</div>
+            <div class="summary">Five autonomous construction machines previewed. NVIDIA partnership and Cat AI Assistant announced. $25M workforce investment pledged.</div>
+            <div class="tags"><span class="tag">Competitor</span><span class="tag">Product</span></div>
+          </div>
+          <div class="news-item">
+            <div class="date">11.28.2025</div>
+            <div class="title">Gravis Robotics Raises $23M for Autonomous Earthmoving</div>
+            <div class="source">Fortune &middot; Tech.eu</div>
+            <div class="summary">Zurich-based retrofit startup raises $23M. Deployed at Manchester Airport for UK's first large-scale autonomous excavation.</div>
+            <div class="tags"><span class="tag">Competitor</span><span class="tag">$23M</span></div>
+          </div>
+          <div class="news-item">
+            <div class="date">09.2025</div>
+            <div class="title">Built Robotics + Blattner Partner on Solar Construction Safety</div>
+            <div class="source">Built Robotics</div>
+            <div class="summary">Built Robotics continues pivot to solar, partnering with Blattner. RPD 35 pile driver deployed at scale.</div>
+            <div class="tags"><span class="tag">Competitor</span><span class="tag">Partnership</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ COMPETITOR TAB ═══════ -->
+  <div class="tab-content" id="tab-competitors">
+    <div class="card full-width">
+      <div class="card-header">
+        <span class="card-title">Competitor Comparison</span>
+        <span class="card-number">00011</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Focus</th>
+            <th>Approach</th>
+            <th>Total Funding</th>
+            <th>Latest Move</th>
+            <th>Threat</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="company-aim">AIM Intelligent Machines</span></td>
+            <td>Mining, Construction, Defense</td>
+            <td>Retrofit &mdash; any make/model</td>
+            <td style="font-family:var(--mono);color:var(--white);">$91.1M</td>
+            <td>$4.9M Air Force contract (Jan '26)</td>
+            <td>&mdash;</td>
+          </tr>
+          <tr>
+            <td><span class="company-name">Bedrock Robotics</span></td>
+            <td>Construction (earthmoving)</td>
+            <td>Retrofit &mdash; reversible kit</td>
+            <td style="font-family:var(--mono);color:var(--white);">$350M+</td>
+            <td>$270M Series B at $1.75B (Feb '26)</td>
+            <td><span class="threat-marker threat-critical">Critical</span></td>
+          </tr>
+          <tr>
+            <td><span class="company-name">Caterpillar</span></td>
+            <td>Mining &amp; Construction (OEM)</td>
+            <td>Integrated OEM autonomy</td>
+            <td style="font-family:var(--mono);color:var(--white);">Public</td>
+            <td>5 autonomous machines at CES '26</td>
+            <td><span class="threat-marker threat-critical">Critical</span></td>
+          </tr>
+          <tr>
+            <td><span class="company-name">Built Robotics</span></td>
+            <td>Solar construction</td>
+            <td>Retrofit (Exosystem)</td>
+            <td style="font-family:var(--mono);color:var(--white);">$137M</td>
+            <td>Pivoted to solar; Blattner deal</td>
+            <td><span class="threat-marker threat-low">Low</span></td>
+          </tr>
+          <tr>
+            <td><span class="company-name">SafeAI / Pronto</span></td>
+            <td>Mining, quarries</td>
+            <td>Retrofit &mdash; camera-based</td>
+            <td style="font-family:var(--mono);color:var(--white);">$70M+</td>
+            <td>Acquired by Pronto (Jul '25)</td>
+            <td><span class="threat-marker threat-medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="company-name">Gravis Robotics</span></td>
+            <td>Construction (earthmoving)</td>
+            <td>Retrofit &mdash; haptic soil sensing</td>
+            <td style="font-family:var(--mono);color:var(--white);">$23M</td>
+            <td>$23M raise; Manchester Airport</td>
+            <td><span class="threat-marker threat-medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><span class="company-name">Teleo</span></td>
+            <td>Construction (remote ops)</td>
+            <td>Remote control + semi-auto</td>
+            <td style="font-family:var(--mono);color:var(--white);">~$25M</td>
+            <td>John Deere collaborator program</td>
+            <td><span class="threat-marker threat-low">Low</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Funding Comparison</span>
+          <span class="card-number">00100</span>
+        </div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label">Bedrock</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%">$350M+</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Built Robotics</div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:39%">$137M</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">AIM</div>
+            <div class="bar-track"><div class="bar-fill" style="width:26%">$91.1M</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">SafeAI/Pronto</div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:20%">$70M+</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Gravis</div>
+            <div class="bar-track"><div class="bar-fill faint" style="width:7%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Positioning Notes</span>
+          <span class="card-number">00101</span>
+        </div>
+        <div class="scrollable prose">
+          <p><strong>Bedrock Robotics</strong> is the #1 competitive threat. Same Waymo pedigree narrative, same retrofit approach, but with 3.8x AIM's funding and a $1.75B valuation. Key differentiator: AIM has defense contracts + Earthbrain/Komatsu partnership + mining deployments. Bedrock is construction-only for now.</p>
+          <p><strong>Caterpillar</strong> is the incumbent entering the space with OEM-integrated autonomy. Their CES push signals construction autonomy is now mainstream. AIM should position as the brand-agnostic retrofit alternative to Cat's walled garden.</p>
+          <p><strong>Built Robotics</strong> has pivoted to solar pile-driving, effectively exiting the direct earthmoving competition. Reduced threat.</p>
+          <p><strong>SafeAI</strong> was acquired by Pronto and is now focused on mining haulage. Differentiated enough to be moderate threat only in mining segment.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ GEO TAB ═══════ -->
+  <div class="tab-content" id="tab-geo">
+    <div class="card full-width">
+      <div class="card-header">
+        <span class="card-title">GEO Visibility Audit</span>
+        <span class="card-number">00110</span>
+      </div>
+      <p style="font-family:var(--mono); font-size:10px; color:var(--dim); margin-bottom:24px; letter-spacing:1px;">Based on web search results powering AI-generated answers (ChatGPT, Perplexity, Google AI Overviews). Tested 02.18.2026.</p>
+
+      <div class="geo-query">
+        <div class="query-text">&gt; "autonomous earthmoving technology companies"</div>
+        <div class="geo-results">
+          <span class="geo-chip geo-mentioned">[+] Mentioned</span>
+          <span class="geo-chip">Position: Top 3</span>
+        </div>
+        <div class="geo-note">AIM appears as a leading result alongside Gravis and Built Robotics. Strong visibility here.</div>
+      </div>
+
+      <div class="geo-query">
+        <div class="query-text">&gt; "best autonomous construction equipment companies 2026"</div>
+        <div class="geo-results">
+          <span class="geo-chip geo-absent">[&mdash;] Absent</span>
+          <span class="geo-chip">Listed: Cat, Bedrock, Komatsu, Pronto</span>
+        </div>
+        <div class="geo-note">AIM does not appear in the top results for this high-value query. Bedrock and Caterpillar dominate. Action needed.</div>
+      </div>
+
+      <div class="geo-query">
+        <div class="query-text">&gt; "AI heavy machinery construction startups retrofit"</div>
+        <div class="geo-results">
+          <span class="geo-chip geo-mentioned">[+] Mentioned</span>
+          <span class="geo-chip">Position: #2 (after Bedrock)</span>
+        </div>
+        <div class="geo-note">AIM appears prominently in retrofit-specific queries. Bedrock now leads due to recent funding coverage volume.</div>
+      </div>
+
+      <div class="geo-query">
+        <div class="query-text">&gt; "autonomous mining equipment startups"</div>
+        <div class="geo-results">
+          <span class="geo-chip geo-partial">[~] Partial</span>
+          <span class="geo-chip">Mentioned in some sources, not all</span>
+        </div>
+        <div class="geo-note">Mining queries surface Pronto/SafeAI and Caterpillar more consistently. AIM appears in some but not all result sets.</div>
+      </div>
+
+      <div class="geo-query">
+        <div class="query-text">&gt; "construction workforce shortage autonomous solution"</div>
+        <div class="geo-results">
+          <span class="geo-chip geo-absent">[&mdash;] Absent</span>
+          <span class="geo-chip">Listed: Bedrock, Cat, market reports</span>
+        </div>
+        <div class="geo-note">AIM doesn't appear in workforce-narrative queries. Key content gap &mdash; publish thought leadership tying AIM to the labor crisis.</div>
+      </div>
+
+      <div class="geo-query">
+        <div class="query-text">&gt; "autonomous construction military defense"</div>
+        <div class="geo-results">
+          <span class="geo-chip geo-mentioned">[+] Mentioned</span>
+          <span class="geo-chip">Position: Dominant</span>
+        </div>
+        <div class="geo-note">Strong differentiation. AIM owns this niche with the Air Force contract. No competitor presence here yet.</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">GEO Score by Category</span><span class="card-number">00111</span></div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label">Defense/Military</div>
+            <div class="bar-track"><div class="bar-fill" style="width:90%">90%</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Earthmoving</div>
+            <div class="bar-track"><div class="bar-fill" style="width:85%">85%</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Retrofit Autonomy</div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:72%">72%</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Mining Autonomy</div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:45%">45%</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">General Construction</div>
+            <div class="bar-track"><div class="bar-fill faint" style="width:30%">30%</div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Workforce/Labor</div>
+            <div class="bar-track"><div class="bar-fill faint" style="width:15%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Recommendations</span><span class="card-number">01000</span></div>
+        <div class="scrollable prose">
+          <p><span class="rec-number">001 &rarr;</span> Publish thought leadership framing AIM as solving the 500K construction worker shortage. Currently absent from these queries.</p>
+          <p><span class="rec-number">002 &rarr;</span> Create content using "autonomous construction equipment" in headlines &mdash; the highest-volume query where AIM is missing.</p>
+          <p><span class="rec-number">003 &rarr;</span> Pitch listicle inclusion to BuiltWorlds, StartUs Insights, and Equipment World for their "top companies" roundups.</p>
+          <p><span class="rec-number">004 &rarr;</span> Lean into the defense differentiation &mdash; no competitor owns this narrative. Expand content around military/infrastructure use cases.</p>
+          <p><span class="rec-number">005 &rarr;</span> Counter Bedrock's Waymo narrative by emphasizing Adam's Waymo tenure plus actual commercial mining deployments (not just construction pilots).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ TIMELINE TAB ═══════ -->
+  <div class="tab-content" id="tab-timeline">
+    <div class="card full-width">
+      <div class="card-header"><span class="card-title">Activity Timeline &mdash; Last 9 Months</span><span class="card-number">01001</span></div>
+      <div class="scrollable">
+        <div class="timeline-item">
+          <div class="timeline-marker">&rarr;</div>
+          <div class="timeline-content">
+            <div class="t-date">02.04.2026</div>
+            <div class="t-text"><strong>Bedrock Robotics</strong> raises $270M Series B at $1.75B valuation. Co-led by CapitalG and Valor Atreides AI Fund. NVIDIA's NVentures participates.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker is-aim">+</div>
+          <div class="timeline-content">
+            <div class="t-date">01.21.2026</div>
+            <div class="t-text"><strong>AIM</strong> secures $4.9M in U.S. Air Force contracts for autonomous air base construction and runway repair. Covered by Axios and GeekWire.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker">&rarr;</div>
+          <div class="timeline-content">
+            <div class="t-date">01.07.2026</div>
+            <div class="t-text"><strong>Caterpillar</strong> CES 2026 keynote: 5 autonomous construction machines, NVIDIA partnership, Cat AI Assistant, $25M workforce investment.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker is-aim">+</div>
+          <div class="timeline-content">
+            <div class="t-date">12.03.2025</div>
+            <div class="t-text"><strong>AIM + Earthbrain</strong> announce strategic partnership for global autonomous earthmoving and smart construction.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker">&rarr;</div>
+          <div class="timeline-content">
+            <div class="t-date">11.28.2025</div>
+            <div class="t-text"><strong>Gravis Robotics</strong> raises $23M. Deployed at Manchester Airport for first large-scale autonomous excavation in the UK.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker">&rarr;</div>
+          <div class="timeline-content">
+            <div class="t-date">11.2025</div>
+            <div class="t-text"><strong>Bedrock Robotics</strong> begins supervised autonomous excavation on 130-acre Phoenix site with Sundt Construction. 65K+ cu yd moved.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker">&rarr;</div>
+          <div class="timeline-content">
+            <div class="t-date">09.2025</div>
+            <div class="t-text"><strong>Built Robotics + Blattner</strong> announce solar construction safety partnership. Built continues solar pivot.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker">&rarr;</div>
+          <div class="timeline-content">
+            <div class="t-date">07.16.2025</div>
+            <div class="t-text"><strong>Bedrock Robotics</strong> emerges from stealth with $80M in seed/Series A. Founded by ex-Waymo trucking lead.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker">&rarr;</div>
+          <div class="timeline-content">
+            <div class="t-date">07.15.2025</div>
+            <div class="t-text"><strong>SafeAI acquired by Pronto</strong>. SafeAI's tech integrated into Pronto's autonomous off-road portfolio.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker is-aim">+</div>
+          <div class="timeline-content">
+            <div class="t-date">06.10.2025</div>
+            <div class="t-text"><strong>AIM</strong> announces $50M funding round. Investors include Khosla Ventures, General Catalyst, DCVC, Elad Gil.</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-marker">&rarr;</div>
+          <div class="timeline-content">
+            <div class="t-date">05.2025</div>
+            <div class="t-text"><strong>ASI + SoftBank</strong> launch ASI Construction focused on automating earth-moving fleets.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════ FOOTER ═══════ -->
+<div class="footer">
+  <div class="footer-left">
+    <svg viewBox="0 0 2000 2000" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1025.5,1378.5c218,0,208,186,208,186h-102s0-108-106-108-106,108-106,108h-102S807.5,1378.5,1025.5,1378.5Z" fill="#333"/>
+      <path d="M1391,628V525s-203.5-20.5-227.5,132.5,128.64,191.75,95,386c-27.23,157.24-192.58,168.64-232.39,169.08,0,0,0,0,0,0h-1.18s0,0,0,0c-39.81-.44-205.16-11.84-232.39-169.08-33.64-194.25,119-233,95-386S660,525,660,525V628s107-4,105,70c-2.5,92.5-105,161-105,321s99,295,365,295h1c266,0,365-135,365-295s-102.5-228.5-105-321C1284,624,1391,628,1391,628Z" fill="#333"/>
+    </svg>
+    <div class="footer-text">
+      [ H A U S ]<br>
+      THE DEEP TECH AGENCY
+    </div>
+  </div>
+  <div class="footer-right">
+    AIM Intelligent Machines &mdash; PR Intelligence Dashboard<br>
+    Data as of 02.18.2026<br>
+    . . . . . . . . . . . . . . . . . . . . . . . . . .
+  </div>
+</div>
+
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+
+</body>
+</html>
